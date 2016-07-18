@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Result</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  </head>
+  <body>
+    <div class="container">
+      <form action="/" method="get">
+        Input: <input type="text" name="q"><br>
+        <input type="submit" value="Submit">
+      </form>
+
+      <h4>Input: {{input_sentence}}</h4>
+      <ol>
+        {% for score in scores %}
+          <li>{{paths[loop.index-1]}}<div class="progress">
+  <div class="progress-bar progress-bar-success" style="width: {{score[1]*100}}%">
+  </div>
+  <div class="progress-bar progress-bar-danger" style="width: {{score[0]*100}}%">
+  </div>
+</div></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </body>
+</html>

@@ -4,7 +4,7 @@
 # sudo pip3 install flask
 
 import os
-from flask import Flask, request, Response
+from flask import Flask, request, Response, render_template
 from multiprocessing import Pool
 from parser import parse_sentence
 import json
@@ -17,13 +17,15 @@ pool = Pool(1, maxtasksperchild=50)
 @app.route('/')
 def index():
   q = request.args.get("q", "")
-  result = pool.apply(parse_sentence, [q])
+  scores, paths = pool.apply(parse_sentence, [q])
+
+  return render_template('template.html', scores=scores, paths=paths, input_sentence=q)
 
   return Response(
-    response=json.dumps(result, indent=2),
-    status=200,
-    content_type="application/json")
+    response=result,
+    status=200)
 
 if __name__ == '__main__':
     app.run(debug=True, port=port, host="0.0.0.0")
+
 

@@ -1,9 +1,15 @@
 #!/usr/bin/python3
 
 from collections import OrderedDict
+from flask import render_template
 import subprocess
+import sys
 
-ROOT_DIR = "models/syntaxnet"
+sys.path.insert(0, '/home/ubuntu/cnn-text-classification-tf')
+
+import cnntest # Comes from that directory ^. Ugly hack, as usual
+
+ROOT_DIR = ".."
 PARSER_EVAL = "bazel-bin/syntaxnet/parser_eval"
 MODEL_DIR = "syntaxnet/models/parsey_mcparseface"
 
@@ -86,8 +92,40 @@ def parse_sentence(sentence):
   # Do syntax parsing.
   dependency_parse = send_input(dependency_parser, pos_tags)
 
+  tokenizer = subprocess.Popen(["ruby", "/home/ubuntu/parse.rb"],
+	cwd=ROOT_DIR,
+	stdin=subprocess.PIPE,
+	stdout=subprocess.PIPE)
+
+  tokenizer.stdin.write(dependency_parse.encode('utf8'))
+  tokenizer.stdin.write(b"\n\n") # signal end
+  tokenizer.stdin.flush()
+
+  response = b""
+  while True:
+   line = tokenizer.stdout.readline()
+   if "FINISHED" in line:
+     break
+   if len(line) > 1:
+     response += line
+
+  response = response.lower()
+
+  parses = response.decode('utf8').split("\n")
+  parses = filter(None, parses) # filter out blank strings
+
+  print(len(parses))
+  print(parses)
+
+  return (cnntest.test_paths(parses), parses)
+
+#  return render_template('template.html', scores=cnntest.test_paths(parses), sentence=sentence, parses=parses)
+
+  return dependency_parse.decode('utf8')
+
   # Make a tree.
   dependency_parse = split_tokens(dependency_parse)
+
   tokens = { tok["index"]: tok for tok in dependency_parse }
   tokens[0] = OrderedDict([ ("sentence", sentence) ])
   for tok in dependency_parse:
