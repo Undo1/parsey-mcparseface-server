@@ -5,7 +5,7 @@ from flask import render_template
 import subprocess
 import sys
 
-sys.path.insert(0, '/home/ubuntu/cnn-text-classification-tf')
+sys.path.insert(0, '../cnn-text-classification-tf')
 
 import cnntest # Comes from that directory ^. Ugly hack, as usual
 
