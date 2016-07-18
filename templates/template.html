@@ -12,6 +12,11 @@
       </form>
 
       <h4>Input: {{input_sentence}}</h4>
+
+      <strong>Result: <span class="text-success">{{(calc_scores[0] * 100)|round(1)}}% helpful</span> | <span class="text-danger">{{(calc_scores[1] * 100)|round(1)}}% declined</span></strong>
+
+      <hr>
+
       <ol>
         {% for score in scores %}
           <li>{{paths[loop.index-1]}}<div class="progress">
@@ -23,7 +28,7 @@
         {% endfor %}
       </ol>
       <p>Raw</p>
-      <pre>{{scores}}</pre>
+      <pre>{{raw_scores}}</pre>
       <p>positive scores</p>
       <pre>{{pos_scores}}</pre>
       <p>negative scores</p>
@@ -32,6 +37,8 @@
       <pre>{{calc_pos}}</pre>
       <p>calc neg score</p>
       <pre>{{calc_neg}}</pre>
+      <p>calc softmax_scores</p>
+      <pre>{{calc_scores}}</pre>
     </div>
   </body>
 </html>

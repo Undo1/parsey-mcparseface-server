@@ -118,7 +118,9 @@ def parse_sentence(sentence):
   print(len(parses))
   print(parses)
 
-  return (cnntest.test_paths(parses), parses)
+  raw_result, scores = cnntest.test_paths(parses)
+
+  return (scores, parses, raw_result)
 
 #  return render_template('template.html', scores=cnntest.test_paths(parses), sentence=sentence, parses=parses)
 
