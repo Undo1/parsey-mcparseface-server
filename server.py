@@ -19,7 +19,16 @@ def index():
   q = request.args.get("q", "")
   scores, paths = pool.apply(parse_sentence, [q])
 
-  return render_template('template.html', scores=scores, paths=paths, input_sentence=q)
+  positive_scores = sorted([x[1] for x in scores])
+  negative_scores = sorted([x[0] for x in scores])
+
+  max_positive_score = positive_scores.pop()
+  max_negative_score = negative_scores.pop()
+
+  calc_positive_score = max_positive_score + sum(positive_scores) / float(len(positive_scores))
+  calc_negative_score = max_negative_score + sum(negative_scores) / float(len(negative_scores))
+
+  return render_template('template.html', scores=scores, paths=paths, input_sentence=q, pos_scores=positive_scores, neg_scores=negative_scores, calc_pos=calc_positive_score, calc_neg=calc_negative_score)
 
   return Response(
     response=result,
