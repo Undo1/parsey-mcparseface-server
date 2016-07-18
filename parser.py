@@ -4,12 +4,13 @@ from collections import OrderedDict
 from flask import render_template
 import subprocess
 import sys
+import os
 
 sys.path.insert(0, '../cnn-text-classification-tf')
 
 import cnntest # Comes from that directory ^. Ugly hack, as usual
 
-ROOT_DIR = ".."
+ROOT_DIR = "../models/syntaxnet"
 PARSER_EVAL = "bazel-bin/syntaxnet/parser_eval"
 MODEL_DIR = "syntaxnet/models/parsey_mcparseface"
 
@@ -92,10 +93,10 @@ def parse_sentence(sentence):
   # Do syntax parsing.
   dependency_parse = send_input(dependency_parser, pos_tags)
 
-  tokenizer = subprocess.Popen(["ruby", "/home/ubuntu/parse.rb"],
-	cwd=ROOT_DIR,
-	stdin=subprocess.PIPE,
-	stdout=subprocess.PIPE)
+  tokenizer = subprocess.Popen(["ruby", "parse.rb"],
+    cwd=os.getcwd(),
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE)
 
   tokenizer.stdin.write(dependency_parse.encode('utf8'))
   tokenizer.stdin.write(b"\n\n") # signal end
