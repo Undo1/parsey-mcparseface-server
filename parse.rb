@@ -31,7 +31,7 @@ parses = contents.split("\n\n")
 
 parses.each do |parse|
   begin
-    root = parse.scan(/^(\d*)\s*(\w*)\s*\w*\s*(\w*)\s*(\w*)\s*.\s*\d+\s*(root)/i).first
+    root = parse.scan(/^(\d*)\s*(.*?)\s*\w*\s*(\w*)\s*(\w*)\s*.\s*\d+\s*(root)/i).first
     print_word_dependencies([root], parse)
   rescue Exception => e
     puts e
