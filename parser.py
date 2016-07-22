@@ -3,6 +3,7 @@
 from collections import OrderedDict
 from flask import render_template
 import subprocess
+import datetime
 import sys
 import os
 
@@ -83,12 +84,16 @@ def split_tokens(parse):
     for line in parse.strip().split("\n")
   ]
 
-def parse_sentence(sentence):
-  if "\n" in sentence or "\r" in sentence:
+# We show different information on a single-flag parse (web) than on a multi-flag
+# parse (JSON response). This really should be one method, but until then this is
+# slightly faster to implement
+
+def parse_single_flag(flag):
+  if "\n" in flag or "\r" in flag:
     raise ValueError()
 
   # Do POS tagging.
-  pos_tags = send_input(pos_tagger, sentence + "\n")
+  pos_tags = send_input(pos_tagger, flag + "\n")
 
   # Do syntax parsing.
   dependency_parse = send_input(dependency_parser, pos_tags)
@@ -118,11 +123,62 @@ def parse_sentence(sentence):
   print(len(parses))
   print(parses)
 
-  raw_result, scores = cnntest.test_paths(parses)
+  raw_result, scores = cnntest.test_single_flag(parses)
 
   return (scores, parses, raw_result)
 
-#  return render_template('template.html', scores=cnntest.test_paths(parses), sentence=sentence, parses=parses)
+def parse_flags(flags):
+  all_parses = []
+  for flag in flags:
+    # Do POS tagging.
+    print(datetime.datetime.now())
+    pos_tags = send_input(pos_tagger, flag + "\n")
+    print(datetime.datetime.now())
+
+    # Do syntax parsing.
+    dependency_parse = send_input(dependency_parser, pos_tags)
+    print(datetime.datetime.now())
+
+    tokenizer = subprocess.Popen(["ruby", "parse.rb"],
+      cwd=os.getcwd(),
+      stdin=subprocess.PIPE,
+      stdout=subprocess.PIPE)
+
+    print(datetime.datetime.now())
+
+    tokenizer.stdin.write(dependency_parse.encode('utf8'))
+    tokenizer.stdin.write(b"\n\n") # signal end
+    tokenizer.stdin.flush()
+
+    print(dependency_parse.encode('utf8'))
+
+    response = b""
+    while True:
+     line = tokenizer.stdout.readline()
+     if "FINISHED" in line:
+       break
+     if len(line) > 1:
+       response += line
+
+    response = response.lower()
+
+    parses = response.decode('utf8').split("\n")
+    parses = filter(None, parses) # filter out blank strings
+
+    print(datetime.datetime.now())
+
+    print(len(parses))
+    print(parses)
+
+    all_parses.append(parses)
+
+  results = cnntest.test_multiple_flags(all_parses)
+
+  print(datetime.datetime.now())
+
+  return results
+
+#  return render_template('template.html', scores=cnntest.test_paths(parses), flag=flag, parses=parses)
 
   return dependency_parse.decode('utf8')
 
@@ -130,7 +186,7 @@ def parse_sentence(sentence):
   dependency_parse = split_tokens(dependency_parse)
 
   tokens = { tok["index"]: tok for tok in dependency_parse }
-  tokens[0] = OrderedDict([ ("sentence", sentence) ])
+  tokens[0] = OrderedDict([ ("flag", flag) ])
   for tok in dependency_parse:
      tokens[tok['parent']]\
        .setdefault('tree', OrderedDict()) \
@@ -140,8 +196,3 @@ def parse_sentence(sentence):
      del tok['relation']
 
   return tokens[0]
-
-
-if __name__ == "__main__":
-  import sys, pprint
-  pprint.pprint(parse_sentence(sys.stdin.read().strip())["tree"])

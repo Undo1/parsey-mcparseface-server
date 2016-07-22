@@ -6,7 +6,7 @@
 import os
 from flask import Flask, request, Response, render_template
 from multiprocessing import Pool
-from parser import parse_sentence
+from parser import parse_flags, parse_single_flag
 import json
 import numpy as np
 
@@ -23,7 +23,7 @@ def softmax(w, t=1.0):
 @app.route('/')
 def index():
   q = request.args.get("q", "")
-  scores, paths, raw_scores = pool.apply(parse_sentence, [q])
+  scores, paths, raw_scores = pool.apply(parse_single_flag, [q])
 
   positive_scores = sum([x[1] for x in raw_scores]) / float(len(raw_scores))# sorted([x[1] for x in scores])
   negative_scores = sum([x[0] for x in raw_scores]) / float(len(raw_scores))# sorted([x[0] for x in scores])
@@ -34,6 +34,28 @@ def index():
 
   return Response(
     response=result,
+    status=200)
+
+@app.route('/batch', methods=['POST'])
+def batch():
+  flags = request.get_json()['flags']
+
+  results = pool.apply(parse_flags, [flags])
+
+  print(results)
+
+  per_flag_results = []
+
+  for result in results:
+    positive_scores = sum([x[1] for x in result]) / float(len(result))
+    negative_scores = sum([x[0] for x in result]) / float(len(result))
+
+    calc_scores = softmax([positive_scores, negative_scores]).tolist()[0]
+
+    per_flag_results.append(calc_scores)
+
+  return Response(
+    response=json.dumps(per_flag_results),
     status=200)
 
 if __name__ == '__main__':
