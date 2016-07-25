@@ -30,9 +30,12 @@ def send_input(process, input):
   response = b""
   while True:
     line = process.stdout.readline()
-    if line.strip() == b"":
-      # empty line signals end of response
+    print(line.strip())
+    if line.strip().startswith("1\tPARSEFINISHED"):
+      if process == pos_tagger:
+        response += line
       break
+
     response += line
   return response.decode("utf8")
 
@@ -129,14 +132,23 @@ def parse_single_flag(flag):
 
 def parse_flags(flags):
   all_parses = []
-  for flag in flags:
-    # Do POS tagging.
-    print(datetime.datetime.now())
-    pos_tags = send_input(pos_tagger, flag + "\n")
-    print(datetime.datetime.now())
 
+  # Do POS tagging.
+  print(datetime.datetime.now())
+  pos_tags = send_input(pos_tagger, "\n".join(flags) + "\nPARSEFINISHED\n")
+  print(datetime.datetime.now())
+
+  print pos_tags
+  print len(pos_tags)
+
+  dependency_parsings = send_input(dependency_parser, pos_tags + "\n").split("\n\n")
+  print dependency_parsings
+
+  for dependency_parse in dependency_parsings:
     # Do syntax parsing.
-    dependency_parse = send_input(dependency_parser, pos_tags)
+
+    dependency_parse = os.linesep.join([s for s in dependency_parse.splitlines() if s.strip()])
+
     print(datetime.datetime.now())
 
     tokenizer = subprocess.Popen(["ruby", "parse.rb"],
@@ -163,7 +175,7 @@ def parse_flags(flags):
     response = response.lower()
 
     parses = response.decode('utf8').split("\n")
-    parses = filter(None, parses) # filter out blank strings
+    parses = [parse for parse in parses if parse != [] and parse != None and parse != ""]
 
     print(datetime.datetime.now())
 
@@ -171,6 +183,11 @@ def parse_flags(flags):
     print(parses)
 
     all_parses.append(parses)
+
+
+  all_parses = [parse for parse in all_parses if len([n for n in parse if n != None and n != ""]) >= 1]
+  print all_parses
+  print len(all_parses)
 
   results = cnntest.test_multiple_flags(all_parses)
 

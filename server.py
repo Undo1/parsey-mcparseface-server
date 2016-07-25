@@ -50,7 +50,7 @@ def batch():
     positive_scores = sum([x[1] for x in result]) / float(len(result))
     negative_scores = sum([x[0] for x in result]) / float(len(result))
 
-    calc_scores = softmax([positive_scores, negative_scores]).tolist()[0]
+    calc_scores = round(softmax([positive_scores, negative_scores]).tolist()[0], 3)
 
     per_flag_results.append(calc_scores)
 
